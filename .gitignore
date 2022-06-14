@@ -7,3 +7,5 @@ cmake_install.cmake
 compile_commands.json
 codebrowser_*
 build*/
+generator/embedded_includes.h
+generator/projectmanager_systemprojects.cpp

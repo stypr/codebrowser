@@ -12,7 +12,7 @@
  */
 
 body, table.code, select { background-color: #2b2b2b; color: #eeeeee; }
-.code { font-family: JetBrains Mono, monospace; font-size: 13px; }
+.code { font-size: 13px; }
 /* top header delimiter */
 hr { border: 1px solid #3b3b3b }
 /* top-left input box*/

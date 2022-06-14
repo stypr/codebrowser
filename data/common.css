@@ -1,7 +1,23 @@
 @import "jquery/jquery-ui.css";
 
+@font-face {
+    font-family: 'Oxygen Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(//fonts.gstatic.com/s/oxygenmono/v13/h0GsssGg9FxgDgCjLeAd7hjYx-4.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'SUIT Variable';
+	font-weight: 100 900;
+	src: url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/variable/woff2/SUIT-Variable.woff2') format('woff2-variations');
+    font-display: swap;
+}
+
 /* layout */
-body { color:#000000; background-color:#ffffff; padding:0; margin: 0;  font-family: Helvetica,sans-serif; }
+body { color:#000000; background-color:#ffffff; padding:0; margin: 0;  font-family: 'SUIT Variable', Helvetica, sans-serif; }
 a { color: #037; border: none; text-decoration: none }
 a:hover{  text-decoration: underline }
 
@@ -28,7 +44,7 @@ list-style-type: none; padding: 0; margin-right: 1ex;
 }
 
 .code { border-collapse:collapse; width:100%; padding:0 }
-.code { font-family: monospace; }
+.code { font-family: 'Oxygen Mono',SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace; }
 table.code{ table-layout:fixed; width: 100% } /* This improves performence.  The idea is that the second column just overflows */
 .code th { width:6.5ex; padding-right:1ex; background-color:#eeeeee ;
             text-align:right; color:black; font-weight:normal;

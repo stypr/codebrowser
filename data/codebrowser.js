@@ -26,8 +26,6 @@ if (!data_path) {
 
 //Styles:
 var setStyle = "";
-document.write("<link rel='alternate stylesheet' title='Solarized' href='" + dataPath + "/solarized.css' />");
-document.write("<link rel='alternate stylesheet' title='Monogai' href='" + data_path + "/monokai.css' />");
 
 function switchStylestyle(styleName) {
     setStyle = styleName;
@@ -330,13 +328,8 @@ $(function () {
 
     var tooltip = {
         ref: "", //the 'ref' of the current symbol displayed
-        showTimerId : null,
-        hideTimerId : null,
         tooltip : {}, // set when the document is initialized
-        showDelay : 350,
-        normalHideDelay : 200, // time to hide the tooltip if the cursor was not on it
-        focusHideDelay: 700, // time to hide the tooltip after when it was hovered
-        hideDelay : this.normalHideDelay,
+        // hideDelay : this.normalHideDelay,
         gap : 12,
         elem : null,
 
@@ -344,13 +337,7 @@ $(function () {
             $("div#content").append("<div id='tooltip' style='position:absolute' />");
             this.tooltip = $("#tooltip");
             var this_ = this;
-            this.tooltip.hover(
-                function () {
-                    this_.hideDelay = this_.focusHideDelay;
-                    clearTimeout(this_.hideTimerId);
-                },
-                function () { this_.hideAfterDelay(); }
-            );
+            this.tooltip.hover();
         },
 
         setUnderElem: function(elem) {
@@ -373,28 +360,14 @@ $(function () {
         },
 
         showAfterDelay: function(elem, additionalFunction) {
-            //this.tooltip.hide();
-            clearTimeout(this.showTimerId)
-            var tt = this;
-            this.showTimerId = setTimeout( function() {
-                clearTimeout(tt.hideTimerId);
-                if (additionalFunction)
-                    additionalFunction();
-                tt.tooltip.stop(true, true);
-                tt.tooltip.fadeIn();
-                tt.setUnderElem(elem);
-                tt.hideDelay = tt.normalHideDelay;
-            }, this.showDelay);
+            if (additionalFunction)
+                additionalFunction();
+            this.tooltip.show();
+            this.setUnderElem(elem);
         },
 
         hideAfterDelay: function(e) {
-            clearTimeout(this.showTimerId);
-            clearTimeout(this.hideTimerId);
-            var tooltip = this.tooltip;
-            this.hideTimerId = setTimeout( function() {
-                tooltip.stop(true, true);
-                tooltip.fadeOut();
-            }, this.hideDelay);
+            this.tooltip.hide();
         },
 
         setHtml: function(html) {
@@ -1291,7 +1264,6 @@ $(function () {
             $("html,body").animate({scrollTop:targetTop - contentTop}, isLink ? 300 : 1);
             // console.log(tagetTop - contentTop, target.height() * 7)
         }, 300 /* ms, the poorer the network the longer this value */);
-        }
     }
 
     window.onpopstate = function (e) {

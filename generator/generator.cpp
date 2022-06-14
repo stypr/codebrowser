@@ -159,6 +159,7 @@ void Generator::generate(llvm::StringRef outputPrefix, std::string dataPath, con
 	myfile << "<meta charset=\"UTF-8\">\n";
     myfile << "<link rel=\"stylesheet\" href=\"" << dataPath << "/qtcreator.css\" title=\"QtCreator\"/>\n";
     myfile << "<link rel=\"alternate stylesheet\" href=\"" << dataPath << "/solarized.css\" title=\"Solarized\"/>\n";
+    myfile << "<link rel=\"alternate stylesheet\" href=\"" << dataPath << "/solarized.css\" title=\"Monokai\"/>\n";
     myfile << "<link rel=\"alternate stylesheet\" href=\"" << dataPath << "/kdevelop.css\" title=\"KDevelop\"/>\n";
     myfile << "<script type=\"text/javascript\" src=\"" << dataPath << "/jquery/jquery.min.js\"></script>\n";
     myfile << "<script type=\"text/javascript\" src=\"" << dataPath << "/jquery/jquery-ui.min.js\"></script>\n";

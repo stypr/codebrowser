@@ -1,8 +1,13 @@
 #!/bin/sh
 
-OUTPUT_DIRECTORY=/var/www/html/p/
+# Build again
+make clean
+make
 
-DATA_DIRECTORY=$OUTPUT_DIRECTORY/../data
+OUTPUT_DIRECTORY=/var/www/html/p/
+DATA_DIRECTORY=$OUTPUT_DIRECTORY/../
+rm -rf $OUTPUT_DIRECTORY $DATA_DIRECTORY
+
 BUILD_DIRECTORY=$PWD
 SOURCE_DIRECTORY=$PWD
 VERSION=`git describe --always --tags`
