@@ -27,6 +27,8 @@ if (!data_path) {
 //Styles:
 var setStyle = "";
 document.write("<link rel='alternate stylesheet' title='Solarized' href='" + dataPath + "/solarized.css' />");
+document.write("<link rel='alternate stylesheet' title='Monogai' href='" + data_path + "/monokai.css' />");
+
 function switchStylestyle(styleName) {
     setStyle = styleName;
     $('link[rel*=style][title]').each(function(i) {
@@ -416,8 +418,10 @@ $(function () {
     // other highlighting stuff
     var highlighted_items;
     var highlight_items = function(ref) {
-        if (highlighted_items)
+        if (highlighted_items) {
             highlighted_items.removeClass("highlight");
+            highlighted_items.removeClass("block-highlight");
+        }
         if (ref) {
             highlighted_items = $("[data-ref='"+escape_selector(ref)+"']");
             highlighted_items.addClass("highlight")
@@ -425,11 +429,16 @@ $(function () {
     }
 
     var anchor_id  = location.hash.substr(1); //Get the word after the hash from the url
-    if (/^\d+$/.test(anchor_id)) {
+    highlight_keep_syntax_color = false;
+    if (/^\d+$/.test(anchor_id)) { // highlight the target line: #123
         highlighted_items = $("#" + anchor_id);
-        highlighted_items.addClass("highlight")
+        if (!highlight_keep_syntax_color) { // dont keep syntax color
+            highlighted_items = highlighted_items.next().children().add(highlighted_items);
+        }
+        highlighted_items.addClass("highlight");
         scrollToAnchor(anchor_id, false);
-    } else if (/^\d+-\d+$/.test(anchor_id)) {
+    } else if (/^\d+-\d+$/.test(anchor_id)) { // highlight targe line range: #123-456
+        // range/block highlight should keep syntax color for better readabilty
         var m = anchor_id.match(/^(\d+)-(\d+)$/);
         var a = parseInt(m[1]);
         var b = parseInt(m[2]);
@@ -440,9 +449,9 @@ $(function () {
             }
         }
         highlighted_items = $(select);
-        highlighted_items.addClass("highlight")
         scrollToAnchor("" + a, false);
-    } else if (anchor_id != "") {
+        scrollToAnchor("" + a, false);
+    } else if (anchor_id != "") { // highlight target object, #_Z3foo
         highlight_items(anchor_id);
         scrollToAnchor(anchor_id, false);
     }
@@ -525,10 +534,6 @@ $(function () {
         if (proj) { proj_root_path = projects[proj]; }
 
         var url = proj_root_path + "/refs/" + replace_invalid_filename_chars(ref);
-
-        if (!$(this).hasClass("highlight")) {
-            highlight_items(ref);
-        }
 
         var computeTooltipContent = function(data, title, id) {
             var type ="", content ="";
@@ -644,11 +649,14 @@ $(function () {
                     }
                     var shouldCompress = d.length > 15;
                     var dict = { number: 0 };
+                    var dedup = null; // when multi-process enabled there may be some deuplicated entries
+
                     d.each(function() {
                         var th = $(this);
                         var f = th.attr("f");
                         var l = th.attr("l");
                         var t = th.attr("type");
+                        if (dedup == f) return; else dedup = f; // assume sorted
                         if (t) {
                             var prefixL = prefixLen(f, file)
                             if (prefixL >= typePrefixLen) {
@@ -673,12 +681,11 @@ $(function () {
                         }
                     });
                     if (shouldCompress) {
-                        if (dict.number > 40) {
-                            content += "<br/>(Too many)";
-                            return false;
-                        }
+                        var limit = 50;
+                        var cnt = 0;
                         for(var f in dict) {
                             if (!Object.prototype.hasOwnProperty.call(dict,f) || f==="number") continue;
+                            if (cnt++ > limit) break;
                             var url_begin = proj_root_path + "/" + f + ".html";
                             content += "<br/><a href='" + url_begin + "#" + dict[f][0] +"' >" + f +  "</a>";
                             var len = dict[f].length;
@@ -690,6 +697,11 @@ $(function () {
                                     content += ", <a href='" + url_begin + "#" + dict[f][i] +"' >" + dict[f][i] +"</a>";
                                 }
                             }
+                        }
+                        if (dict.number > limit) {
+                          // TODO: create link for that are not showed up
+                          content += "<br/>(Too many to show, " + (dict.number - limit) + " more)";
+                          return false;
                         }
                     }
                     return true;
@@ -887,7 +899,14 @@ $(function () {
                 }
             });
         }
-        tooltip.showAfterDelay(elem, function() { computeTooltipContent(tt.tooltip_data, tt.title_, tt.id) })
+        tooltip.showAfterDelay(elem, function() {
+            if (!$(this).hasClass("highlight")) {
+                // disable instant highlight due to mouse move may be quick on
+                // different contents, it is hard to keep the highlight we want
+                highlight_items(ref);
+            }
+            computeTooltipContent(tt.tooltip_data, tt.title_, tt.id)
+        });
 
         return false;
     };
@@ -1004,7 +1023,7 @@ $(function () {
 /*-------------------------------------------------------------------------------------*/
 
     // Search Line
-    $("#header").prepend("<input id='searchline' type='text' placeholder='Search a file or function'/>");
+    $("#header").prepend("<input id='searchline' type='text' placeholder='Search a file, function or regex'/>");
     var searchline = $("input#searchline");
     var searchTerms;
     searchline.focus(function() {
@@ -1021,7 +1040,23 @@ $(function () {
             if (idx < 0)
                 return;
             location = location.substring(0, idx);
-            window.location = "http://google.com/search?sitesearch=" + encodeURIComponent(location) + "&q=" + encodeURIComponent(text);
+            // window.location = "http://google.com/search?sitesearch=" + encodeURIComponent(location) + "&q=" + encodeURIComponent(text);
+
+            // we dont go to google, just search local
+            url = window.location.href
+            arr = url.split('/')
+            searchPath = "."
+            if (arr.length > 4) {
+              for (i = 4; i < arr.length; ++i) {
+                searchPath = searchPath + "/" + arr[i]
+              }
+            }
+            searchPath = new String(searchPath).substring(0, searchPath.lastIndexOf('/'));
+
+            newLocation = (arr[0] == "" ? "http:" : arr[0]) + "//" + arr[2]
+            // newLocation = 'http://mydev:8888' + "/codesearch" + "?keyword=" + encodeURIComponent(text) + "&path=" + searchPath;
+            newLocation = newLocation + "/codesearch" + "?keyword=" + encodeURIComponent(text) + "&path=" + searchPath;
+            window.location = newLocation
         }
 
 //BEGIN  code duplicated in indexscript.js
@@ -1231,7 +1266,13 @@ $(function () {
     // isLink tells us if we are here because a link was cliked
     function scrollToAnchor(anchor, isLink) {
         var target = $("#" + escape_selector(anchor));
-        if (target.length) {
+        if (!target.length) {
+            return;
+        }
+        // delay execution to get accurate position to scroll
+        setTimeout(function() {
+            targetTop = target.offset().top
+            // console.log(anchor, targetTop, isLink)
             //Smooth scrolling and let back go to the last location
             var contentTop = $("#content").offset().top;
             if (parseInt(anchor)) {
@@ -1242,12 +1283,14 @@ $(function () {
 
             if (isLink) {
             //   history.replaceState({contentTop: contentTop, bodyTop: $("body").scrollTop() }, undefined)
-                history.pushState({bodyTop: target.offset().top - contentTop},
+                history.pushState({bodyTop: targetTop - contentTop},
                                     document.title + "**" + anchor,
                                     window.location.pathname + "#" + anchor);
             }
-            //     $("#content").animate({scrollTop:target.position().top + contentTop }, 300);
-            $("html,body").animate({scrollTop:target.offset().top - contentTop  }, isLink ? 300 : 1);
+            //  $("#content").animate({scrollTop:target.position().top + contentTop }, 300);
+            $("html,body").animate({scrollTop:targetTop - contentTop}, isLink ? 300 : 1);
+            // console.log(tagetTop - contentTop, target.height() * 7)
+        }, 300 /* ms, the poorer the network the longer this value */);
         }
     }
 

@@ -50,7 +50,23 @@ $(function() {
     // Google text search (different than codebrowser.js)
     var text_search = function(text) {
         var location = "" + (window.location);
-        window.location = "http://google.com/search?sitesearch=" + encodeURIComponent(location) + "&q=" + encodeURIComponent(text);
+        // window.location = "http://google.com/search?sitesearch=" + encodeURIComponent(location) + "&q=" + encodeURIComponent(text);
+
+        // we dont go to google, just search local
+        url = window.location.href
+        arr = url.split('/')
+        searchPath = "."
+        if (arr.length > 4) {
+          for (i = 4; i < arr.length; ++i) {
+            searchPath = searchPath + "/" + arr[i]
+          }
+        }
+        searchPath = new String(searchPath).substring(0, searchPath.lastIndexOf('/'));
+
+        newLocation = (arr[0] == "" ? "http:" : arr[0]) + "//" + arr[2]
+        // newLocation = 'http://mydev:8888' + "/codesearch" + "?keyword=" + encodeURIComponent(text) + "&path=" + searchPath;
+        newLocation = newLocation + "/codesearch" + "?keyword=" + encodeURIComponent(text) + "&path=" + searchPath;
+        window.location = newLocation
     }
 
     var fileIndex = [];
@@ -189,9 +205,12 @@ $(function() {
                 t.text("[-]");
                 var content = $("<table/>");
                 var dict = {};
-                var toOpenNow = [];
+                var lastFile = null;
                 for (var i=0; i < fileIndex.length; ++i) {
                     var f = fileIndex[i];
+                    // filter out duplicated file names,
+                    // assumes all files are in sorted order
+                    if (f == lastFile) continue; else lastFile = f;
                     if (f.indexOf(p) == 0) {
                         var sl = f.indexOf('/',  p.length + 1);
 
