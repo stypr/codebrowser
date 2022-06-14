@@ -110,6 +110,13 @@ $(function () {
     // demangle the function name, don't care about the template or the argument
     function demangleFunctionName(mangle) {
         if (! mangle) return mangle;
+        // Demangle function names on Windows too
+        if (mangle.indexOf('@') >= 0) {
+            var pos = mangle.indexOf('@@');
+            var winResult = mangle.slice(0, pos);
+            winResult = winResult.replace("@", ":");
+            return winResult;
+        }
         if (mangle[0] !== '_') return mangle;
         if (mangle[1] === 'M' && mangle[2] === '/') return mangle.slice(3);
         if (mangle[1] !== 'Z') return mangle;
