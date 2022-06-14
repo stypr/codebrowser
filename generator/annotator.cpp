@@ -296,7 +296,14 @@ bool Annotator::generate(clang::Sema &Sema, bool WasInDatabase)
         title=\"Arguments: << " << Generator::escapeAttr(args)   <<"\"" */
 
         // Emit the HTML.
-#if CLANG_VERSION_MAJOR >= 12
+# if CLANG_VERSION_MAJOR >= 13
+        llvm::MemoryBufferRef Buf = getSourceMgr().getBufferOrFake(FID);
+        g.generate(projectManager.outputPrefix, projectManager.dataPath, fn,
+                   Buf.getBufferStart(), Buf.getBufferEnd(), footer,
+                   WasInDatabase ? "" : "Warning: That file was not part of the compilation database. "
+                                        "It may have many parsing errors.",
+                   interestingDefinitionsInFile[FID]);
+# elif CLANG_VERSION_MAJOR >= 12
         const llvm::StringRef Buf = getSourceMgr().getBufferData(FID);
         g.generate(projectManager.outputPrefix, projectManager.dataPath, fn,
                    Buf.begin(), Buf.end(), footer,

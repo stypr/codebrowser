@@ -42,7 +42,9 @@ clang::NamedDecl *parseDeclarationReference(llvm::StringRef Text, clang::Sema &S
 
     auto Buf = llvm::MemoryBuffer::getMemBufferCopy(Text);
     llvm::MemoryBuffer *Buf2 = &*Buf;
-#if CLANG_VERSION_MAJOR == 3 && CLANG_VERSION_MINOR <= 4
+#if CLANG_VERSION_MAJOR >= 12
+    auto FID = PP.getSourceManager().createFileID(Buf->getMemBufferRef());
+#elif CLANG_VERSION_MAJOR == 3 && CLANG_VERSION_MINOR <= 4
     auto FID = PP.getSourceManager().createFileIDForMemBuffer(Buf);
 #else
     auto FID = PP.getSourceManager().createFileID(std::move(Buf));

@@ -97,7 +97,7 @@ void gererateRecursisively(FolderInfo *folder, const std::string &root, const st
 
     size_t pos = root.rfind('/', root.size()-2);
     std::string project = pos < root.size() ? root.substr(pos+1) : root;
-    std::string breadcrumb = "<a href=''>" +path + "</a>";
+    std::string breadcrumb = "<a href=''>" + path + "</a>";
     std::string parent;
 
     pos = path.rfind('/', path.size()-2);

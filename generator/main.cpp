@@ -233,8 +233,7 @@ std::set<std::string> BrowserAction::processed;
 ProjectManager *BrowserAction::projectManager = nullptr;
 
 static bool proceedCommand(std::vector<std::string> command, llvm::StringRef Directory,
-                           llvm::StringRef file, clang::FileManager *FM,
-                           DatabaseType WasInDatabase) {
+                           llvm::StringRef file, clang::FileManager *FM, llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> FS, DatabaseType WasInDatabase) {
     // This code change all the paths to be absolute paths
     //  FIXME:  it is a bit fragile.
     bool previousIsDashI = false;
@@ -302,7 +301,7 @@ static bool proceedCommand(std::vector<std::string> command, llvm::StringRef Dir
       // Map the builtins includes
       const EmbeddedFile *f = EmbeddedFiles;
       while (f->filename) {
-          Inv.mapVirtualFile(f->filename, {f->content , f->size } );
+          FS->addFile(f->filename, 0, llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(f->content , f->size)));
           f++;
       }
     }
@@ -447,7 +446,12 @@ int main(int argc, const char **argv) {
     }
 
     llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> VFS(new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
-    clang::FileManager FM({"."}, VFS);
+    llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> OverlayFileSystem(
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new llvm::vfs::InMemoryFileSystem);
+    OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+    clang::FileManager FM({"."}, OverlayFileSystem);
     FM.Retain();
 
     // Map virtual files
@@ -494,7 +498,7 @@ int main(int argc, const char **argv) {
         if (!compileCommandsForFile.empty() && !isHeader) {
             std::cerr << '[' << (100 * Progress / Sources.size()) << "%] Processing " << file << "\n";
             proceedCommand(compileCommandsForFile.front().CommandLine,
-                           compileCommandsForFile.front().Directory, file, &FM,
+                           compileCommandsForFile.front().Directory, file, &FM, InMemoryFileSystem,
                            IsProcessingAllDirectory ? DatabaseType::ProcessFullDirectory : DatabaseType::InDatabase);
         } else {
             // TODO: Try to find a command line for a file in the same path
@@ -545,7 +549,7 @@ int main(int argc, const char **argv) {
                 command.push_back(llvm::StringRef(file).substr(0, file.size() - 5) % ".h");
             }
             success = proceedCommand(std::move(command), compileCommandsForFile.front().Directory,
-                                     file, &FM,
+                                     file, &FM, InMemoryFileSystem,
                                      IsProcessingAllDirectory ? DatabaseType::ProcessFullDirectory : DatabaseType::NotInDatabase);
         } else {
             std::cerr << "Could not find commands for " << file << "\n";
